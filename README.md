@@ -1,280 +1,207 @@
-# ContextMore
+🧠 SuiAgentic
 
-ContextMore is a FastAPI application for document embedding and semantic retrieval, powered by the Qdrant vector database. It allows you to embed documents from URLs (with or without authentication), chunk and vectorize their content, and perform semantic search over your knowledge base.
+SuiAgentic is a FastAPI-based application for document embedding and semantic retrieval, powered by the Qdrant vector database. It enables you to convert documents (from URLs or local files) into embeddings, store them efficiently, and retrieve relevant content using natural language queries. It is designed to support AI-enhanced tools like Cursor, Copilot, Claude, and other MCP-compatible clients.
 
-## Why
+💡 Why SuiAgentic?
+Many organizations need to integrate context from internal documents (e.g., PRDs, design specs, wikis) into tools used by developers and knowledge workers. However, consolidating documents from various sources into a centralized, searchable knowledge base is complex and fragmented.
 
-Many companies want to integrate their internal documentation / PRD with tools like Cursor, Copilot to make them easy to provide more context to the toolings, or other MCP clients. However, embedding documents into a centralized internal knowledge base often requires building complex workflows, and different teams use different sources of context. 
+SuiAgentic solves this by providing a centralized context server that ingests, chunks, embeds, and indexes your content—making it available via a simple REST API and web interface. It also supports being used as an MCP server for AI agents.
 
-ContextMore is designed to solve this problem by providing a simple, centralized context library that is accessible via API (for building internal tools) and is MCP server ready. The goal is not only to support document embedding, but also to eventually support internal repositories and code libraries (coming soon).
+🚀 Key Features
+Document Embedding: Extracts content from URLs (with or without authentication), splits it into chunks, generates embeddings, and stores them in Qdrant.
 
----
+Semantic Search: Query your knowledge base with natural language and retrieve relevant chunks or documents.
 
-## Features
+Web UI: Easy-to-use web interface for embedding and searching.
 
-- **Embed Documents**: Extracts text from a given URL (supports authentication), splits it into chunks, generates embeddings, and stores them in Qdrant.
-- **Semantic Retrieval**: Retrieve the most relevant document chunks or grouped documents based on a natural language query.
-- **Web UI**: User-friendly web interface for embedding and searching documents.
-- **API Access**: RESTful endpoints for programmatic access.
-- **MCP Server support**: Supporting mcp server using fastapi-mcp.
+REST API: Fully accessible via HTTP endpoints for automation or integration.
 
----
+MCP Server Ready: Use it with MCP-compatible clients like Cursor, Copilot, Claude, etc.
 
-## Prerequisites
+Authentication Support: Supports Basic Auth and Bearer Token for protected documents.
 
-- Python 3.8+
-- Docker (for running Qdrant locally)
-- (Optional) Qdrant server running locally or accessible via network
+⚙️ Quick Start
 
----
-
-## Quick Start
-
-### 1. Clone the Repository
+1. Clone the Repository
 
 ```bash
-git clone git@github.com:prima101112/contextmore.git
-cd contextmore
+git clone https://github.com/AnhQuan2004/mcp_agent.git
+cd mcp_agent
 ```
 
-### 2. Set Up Python Environment
+2. Set up Python Environment
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 ```
 
-### 3. Install Dependencies
+3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
-
-Create a `.env` file in the root directory:
+4. Create .env file (or use the provided .env.example)
 
 ```
 QDRANT_URL=localhost
 QDRANT_PORT=6333
-QDRANT_COLLECTION_NAME=contextmore
+QDRANT_COLLECTION_NAME=documents
 ```
 
-### 5. Run Qdrant (Vector Database)
+5. Start Qdrant (Vector DB)
 
-You can run Qdrant locally using Docker:
-
-```bash
-./runqdrant.sh
-```
-
-Or manually:
+Using Docker:
 
 ```bash
 docker run -p 6333:6333 qdrant/qdrant
 ```
 
----
-
-## Easiest Way to Start: Docker Compose
-
-The fastest way to get ContextMore and Qdrant running together is with Docker Compose. Just run:
+Or using the helper script:
 
 ```bash
-docker-compose up -d
+./runqdrant.sh
 ```
 
-This will automatically start both services and set up persistent storage for Qdrant in the `qdrant/data` directory. Access ContextMore at [http://localhost:8000](http://localhost:8000).
-
-![ContextMore UI](https://raw.githubusercontent.com/prima101112/contextmore/main/static/contextmore-home.png)
-
----
-
-## Running the Application
-
-### Development Server
+6. Run the Agentic App
 
 ```bash
 uvicorn app.main:app --reload
-```
-
-Or, for graceful shutdown and advanced handling:
-
-```bash
+# or:
 python run.py
 ```
 
-The app will be available at [http://localhost:8000](http://localhost:8000).
+Visit http://localhost:8000
 
----
+🌐 Web Interface & API
 
-## API Endpoints
+Web UI:
 
-### Web Pages
+- / — Home
+- /embed — Embed documents via UI
+- /retrieve — Semantic search UI
 
-- `GET /` — Home page
-- `GET /embed` — Embed documents via web UI
-- `GET /retrieve` — Search and retrieve via web UI
+🔍 POST /retrieve
 
-### REST API
-
-- `POST /embed` — Embed a document from a URL  
-  **Request Body:**  
-  ```json
-  {
-    "url": "https://example.com",
-    "call_name": "Example Document",
-    "auth_headers": { "headers": { "Authorization": "Bearer ..." } }, // optional
-    "basic_auth": { "username": "user", "password": "pass" } // optional
-  }
-  ```
-  **Response:**  
-  - Success message, document ID, and metadata.
-
-- `POST /retrieve` — Retrieve information based on a query  
-  **Request Body:**  
-  ```json
-  {
-    "query": "Your search query",
-    "top_k": 5,                // optional, default 5
-    "group_by_doc": true       // optional, default true
-  }
-  ```
-  **Response:**  
-  - List of relevant document chunks or grouped documents.
-
----
-
-## Authentication Support
-
-- **Basic Auth**: Provide username and password for HTTP Basic Authentication.
-- **Custom Headers**: Supply any custom headers (e.g., Bearer tokens) for authenticated requests.
-
----
-
-## Project Structure
-
-```
-contextmore/
-├── app/
-│   ├── main.py                # FastAPI application entry point
-│   ├── config/
-│   │   └── settings.py        # Environment and model settings
-│   ├── models/
-│   │   └── schemas.py         # Pydantic request/response models
-│   ├── services/
-│   │   ├── qdrant_service.py  # Qdrant database operations
-│   │   └── text_service.py    # Text extraction, chunking, embedding
-│   └── utils/                 # (Reserved for future utilities)
-├── static/                    # Static files (logo, CSS, etc.)
-├── templates/                 # Jinja2 HTML templates for web UI
-├── run.py                     # Custom server runner with graceful shutdown
-├── runqdrant.sh               # Script to run Qdrant via Docker
-├── requirements.txt           # Python dependencies
-└── README.md                  # This documentation
+```json
+{
+  "query": "What is the architecture of Sui?",
+  "top_k": 5,
+  "group_by_doc": true
+}
 ```
 
----
+🌍 Embedding from URLs
 
-## Example Usage
+Public URLs:
 
-### Embedding a Document via API
+- Just provide the URL via the API or UI — no auth needed.
 
-```bash
-curl -X POST "http://localhost:8000/embed" \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com", "call_name": "Example"}'
-```
+🤖 Using as an MCP Server
 
-### Retrieving Documents via API
+To use sui as an MCP server:
 
-```bash
-curl -X POST "http://localhost:8000/retrieve" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Your query here", "top_k": 5}'
-```
-
----
-
-## Embeding URLS (Team Workspace)
-
-### embeding public url
-
-for embeding public urls just put the url on the API embed or from the UI
-
-### Embeding confluence url (atlassian)
-
-Embeding atlassian confluence workspace you need to know the ID and a personal api token as a password for confluence.
-
-using basic auth to the url 
-
-`https://{confluence url}/wiki/api/v2/pages?id={page-id}&body-format=storage`
-
-username : your email (usualy)
-
-password : personal api token [docs personal access token](https://developer.atlassian.com/server/jira/platform/personal-access-token/)
-
-put bthat on contextmore and your internal docs will be embeded
-
-### EMbeding Coda url
-
-TODO
-
-## Using as mcp server
-
-to use contextmore as mcp server once you deployed on local you could use as follows on your repected mcp clients 
-
-```
+```json
 {
   "mcpServers": {
-    "contextmore": {
+    "suiAgentic": {
       "url": "http://localhost:8000/mcp"
     }
   }
 }
 ```
 
-### Screenshots example mcp call in cursor
+# Document Upload Tools
 
-![ContextMore UI](https://raw.githubusercontent.com/prima101112/contextmore/main/static/contextmore-in-cursor.png)
+This directory contains tools to bulk upload documents to your SuiAgentic Qdrant database.
 
+## Available Tools
 
-## Deploying ContextMore as a Shared MCP Server for Your Organization
+1. `upload_folder.py` - A simple script to upload PDF files from a folder
+2. `upload_documents.py` - An advanced script to upload PDF, DOCX, and TXT files with more options
 
-If you want everyone in your organization to use ContextMore as a centralized MCP server, follow these steps:
+## Prerequisites
 
-1. **Deploy ContextMore on a Shared Server**
-   - Choose a reliable server (cloud VM, on-premise, or container platform) that is accessible to your organization.
-   - Run ContextMore using the instructions above (ensure Qdrant is also running and accessible).
+- Python 3.8+
+- SuiAgentic application installed and configured
+- Qdrant server running locally or accessible via network
+- Required dependencies installed (PyPDF2, python-docx)
 
-2. **Configure Network Access**
-   - Open the necessary ports (default: 8000 for ContextMore, 6333 for Qdrant) so users and MCP clients can reach the server.
-   - Use a reverse proxy (like Nginx or Traefik) for HTTPS and domain-based access (e.g., `https://contextmore.myorg.com`).
+## Basic Usage
 
-3. **Secure the Deployment**
-   - Protect the API and web UI with authentication (e.g., VPN, SSO, or API keys) to prevent unauthorized access.
-   - Consider running ContextMore and Qdrant behind your organization's firewall or VPN.
+### Upload PDF Files from a Folder
 
-4. **Share the MCP Server Endpoint**
-   - Distribute the MCP server URL (e.g., `https://contextmore.myorg.com`) to your team.
-   - Users can add this endpoint to their MCP-compatible tools (like Cursor, Copilot, Claude Desktop, or custom clients).
+```bash
+# Upload all PDFs from a folder
+python upload_folder.py /path/to/pdf/folder
 
-By deploying ContextMore as a shared MCP server, your entire organization can benefit from a unified, searchable, and extensible knowledge base accessible from any MCP-compatible tool.
+# Upload with a prefix (useful for categorizing documents)
+python upload_folder.py /path/to/pdf/folder --prefix "Research Papers"
+```
 
----
+### Advanced Document Upload
 
-## License
+```bash
+# Upload all supported documents from a folder and subfolders
+python upload_documents.py /path/to/documents --recursive
 
-This project contextmore is licensed under the Apache License 2.0.
+# Add metadata tags to all documents
+python upload_documents.py /path/to/documents --tag category=research --tag project=alpha
 
-### NOTICE
+# Specify collection name (if not using default)
+python upload_documents.py /path/to/documents --collection my_collection
 
-This project includes software called contextmore
-developed by prima101112.
+# Complete example with all options
+python upload_documents.py /path/to/documents --recursive --prefix "Project X" --tag department=marketing --tag status=final
+```
 
-apreciate if you retain this notice in any distribution or derivative works :) but if not is ok.
+## What These Tools Do
 
----
+1. Find supported documents in the specified folder
+2. Extract text content from each document
+3. Split text into manageable chunks
+4. Generate 3072-dimensional embeddings for each chunk
+5. Store chunks and embeddings in Qdrant
+6. Track metadata for each document
 
-**ContextMore** makes it easy to build your own knowledge base with semantic search and MCP ready, using only URLs and a vector database.
-For questions or contributions, please open an issue or pull request! 
+## Command-line Arguments
+
+### upload_folder.py
+
+- `folder` - Path to the folder containing PDF files
+- `--prefix` - Prefix to add to document names
+
+### upload_documents.py
+
+- `folder` - Path to the folder containing documents
+- `--prefix` - Prefix to add to document names
+- `--recursive` - Search for files recursively in subfolders
+- `--collection` - Name of the Qdrant collection to use
+- `--tag` - Add metadata tags to documents (can be used multiple times: `--tag key=value`)
+
+## Examples
+
+### Organize documents by project
+
+```bash
+python upload_documents.py /path/to/projects/project1 --recursive --prefix "Project 1" --tag project=alpha
+python upload_documents.py /path/to/projects/project2 --recursive --prefix "Project 2" --tag project=beta
+```
+
+### Categorize documents
+
+```bash
+python upload_documents.py /path/to/contracts --prefix "Legal" --tag department=legal --tag confidential=true
+python upload_documents.py /path/to/manuals --prefix "Technical" --tag department=engineering
+```
+
+## Troubleshooting
+
+- If you encounter memory errors with large documents, try breaking them into smaller files
+- For large collections of documents, consider processing in smaller batches
+- Check the log output for any errors during processing
+
+🪪 License
+
+Licensed under the Apache License 2.0.
